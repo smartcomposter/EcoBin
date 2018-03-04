@@ -10,9 +10,9 @@ import Foundation
 import CoreBluetooth
 
 private struct BLEConstants {
-    static let TemperatureService = CBUUID(string: "6e400001-b5a3-f393-e0a9-e50e24dcca9e")
-    static let RXCharacteristic = CBUUID(string: "6e400003-b5a3-f393-e0a9-e50e24dcca9e")
-    static let TXCharacteristic = CBUUID(string: "6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+    static let nRF8001BLEService = CBUUID(string: "6e400001-b5a3-f393-e0a9-e50e24dcca9e")
+    static let nRF8001CharacteristicRX = CBUUID(string: "6e400003-b5a3-f393-e0a9-e50e24dcca9e")
+    static let nRF8001CharacteristicTX = CBUUID(string: "6e400002-b5a3-f393-e0a9-e50e24dcca9e")
 }
 
 private struct Weak<T: AnyObject> {
@@ -23,7 +23,7 @@ protocol BLEManagable {
     func startScanning()
     func stopScanning()
     func disconnectPeripheral()
-    func writeValue(value: UInt8)
+    func sendData()
     
     func addDelegate(_ delegate: BLEManagerDelegate)
     func removeDelegate(_ delegate: BLEManagerDelegate)
@@ -37,9 +37,13 @@ protocol BLEManagerDelegate: AnyObject {
 
 class BLEManager: NSObject, BLEManagable {
     
-    fileprivate var shouldStartScanning = false
-    
+    fileprivate var shouldStartScanning = true
+    fileprivate var delegates: [Weak<AnyObject>] = []
+    fileprivate var BLEPeripheral: CBPeripheral?
     private var centralManager: CBCentralManager?
+    private var txCharacteristic : CBCharacteristic?
+    private var rxCharacteristic : CBCharacteristic?
+    
     private var isCentralManagerReady: Bool {
         get {
             guard let centralManager = centralManager else {
@@ -49,12 +53,6 @@ class BLEManager: NSObject, BLEManagable {
         }
     }
     
-    fileprivate var connectingPeripheral: CBPeripheral?
-    fileprivate var connectedPeripheral: CBPeripheral?
-    
-    var writableCharacteristic: CBCharacteristic?
-    
-    fileprivate var delegates: [Weak<AnyObject>] = []
     fileprivate func bleDelegates() -> [BLEManagerDelegate] {
         return delegates.flatMap { $0.object as? BLEManagerDelegate }
     }
@@ -66,60 +64,50 @@ class BLEManager: NSObject, BLEManagable {
     }
     
     func startScanning() {
-        print ("Start scanning")
         guard let centralManager = centralManager, isCentralManagerReady == true else {
             print("Central manager is not ready")
             return
         }
         
         if centralManager.state != .poweredOn {
-            print("Should start scanning")
+            print("Central manager is not powered on")
             shouldStartScanning = true
         } else {
-            print("Should not start scanning")
             shouldStartScanning = false
-            centralManager.scanForPeripherals(withServices: [BLEConstants.TemperatureService], options: [CBCentralManagerScanOptionAllowDuplicatesKey : true])
+            centralManager.scanForPeripherals(withServices: [BLEConstants.nRF8001BLEService], options: [CBCentralManagerScanOptionAllowDuplicatesKey : true])
         }
     }
     
     func stopScanning() {
-        print ("Stop scanning")
         shouldStartScanning = false
         centralManager?.stopScan()
     }
     
     func disconnectPeripheral() {
         stopScanning()
-        if (connectedPeripheral != nil) {
-            print("disconected with connected peripheral")
+        if let peripheral = BLEPeripheral {
+            print("Canceling peripheral connection")
             shouldStartScanning = false;
-            centralManager?.cancelPeripheralConnection(connectedPeripheral!)
-        } else if (connectingPeripheral != nil) {
-            print("disconected with connecting peripheral")
-            shouldStartScanning = false;
-            centralManager?.cancelPeripheralConnection(connectingPeripheral!)
+            centralManager?.cancelPeripheralConnection(peripheral)
         }
-    }
-    
-    func writeValue(value: UInt8) {
-        guard let peripheral = connectedPeripheral, let characteristic = writableCharacteristic else {
-            print("no peripheral")
-            return
-        }
-
-        let data = Data(bytes: [value])
-        peripheral.writeValue(data, for: characteristic, type: .withResponse)
     }
     
     func addDelegate(_ delegate: BLEManagerDelegate) {
-//        print("Add Delegate")
         delegates.append(Weak(object: delegate))
     }
     
     func removeDelegate(_ delegate: BLEManagerDelegate) {
-//        print("Remove Delegate")
         if let index = delegates.index(where: { $0.object === delegate }) {
             delegates.remove(at: index)
+        }
+    }
+    
+    func sendData() {
+        if let data = "apple".data(using: String.Encoding.ascii), let sendCharacteristic = txCharacteristic {
+            BLEPeripheral?.writeValue(data, for: sendCharacteristic, type: CBCharacteristicWriteType.withoutResponse)
+            if let value = String(data: data, encoding: String.Encoding.ascii) {
+                print("Value sent: ", value)
+            }
         }
     }
 }
@@ -128,50 +116,41 @@ class BLEManager: NSObject, BLEManagable {
 extension BLEManager: CBCentralManagerDelegate {
     
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
-//        print("centralManagerDidUpdateState")
         if central.state == .poweredOn {
-            if self.shouldStartScanning {
-                self.startScanning()
+            if shouldStartScanning {
+                startScanning()
             }
         } else {
-            self.connectingPeripheral = nil
-            if let connectedPeripheral = self.connectedPeripheral {
+            if let connectedPeripheral = BLEPeripheral {
                 central.cancelPeripheralConnection(connectedPeripheral)
             }
-            self.shouldStartScanning = true
+            shouldStartScanning = true
         }
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-//        print("centralManagerDidDiscoverPeripheral")
-        self.connectingPeripheral = peripheral
+        BLEPeripheral = peripheral
         central.connect(peripheral, options: nil)
-        self.stopScanning()
+        stopScanning()
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-//        print("centralManagerDidConnectPeripheral")
-        self.connectedPeripheral = peripheral
-        self.connectingPeripheral = nil
-        
-        peripheral.discoverServices([BLEConstants.TemperatureService])
         peripheral.delegate = self
-        
-        self.informDelegatesDidConnect(manager: self)
+        peripheral.discoverServices([BLEConstants.nRF8001BLEService])
+        informDelegatesDidConnect(manager: self)
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("centralManagerDidFailToConnectPeripheral")
-        self.connectingPeripheral = nil
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("centralManagerDidDisconnectPeripheral")
-        self.connectedPeripheral = nil
+        BLEPeripheral = nil
         if (shouldStartScanning) {
-            self.startScanning()
+            startScanning()
         }
-        self.informDelegatesDidDisconnect(manager: self)
+        informDelegatesDidDisconnect(manager: self)
     }
 }
 
@@ -179,39 +158,44 @@ extension BLEManager: CBCentralManagerDelegate {
 extension BLEManager: CBPeripheralDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-//        print("peripheralDidDiscoverServices")
-        if let tempService = peripheral.services?.filter({ $0.uuid.uuidString.uppercased() == BLEConstants.TemperatureService.uuidString.uppercased() }).first {
-            peripheral.discoverCharacteristics([BLEConstants.RXCharacteristic, BLEConstants.TXCharacteristic], for: tempService)
-        } else {
-            print("tempt service not available")
+        guard let services = peripheral.services else {
+            print("No service available")
+            return
+        }
+        
+        for service in services {
+            if service.uuid.uuidString.uppercased().isEqual(BLEConstants.nRF8001BLEService.uuidString.uppercased()) {
+                peripheral.discoverCharacteristics([BLEConstants.nRF8001CharacteristicRX, BLEConstants.nRF8001CharacteristicTX], for: service)
+            }
         }
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-//        print("peripheralDidDiscoverCharacteristicsForServices")
-        if let rxCharacteristic = service.characteristics?.filter({ $0.uuid.uuidString.uppercased() == BLEConstants.RXCharacteristic.uuidString.uppercased()}).first,
-            let txCharacteristic = service.characteristics?.filter({ $0.uuid.uuidString.uppercased() == BLEConstants.TXCharacteristic.uuidString.uppercased()}).first {
-            peripheral.setNotifyValue(true, for: rxCharacteristic)
-            peripheral.setNotifyValue(true, for: txCharacteristic)
-            writableCharacteristic = txCharacteristic
-        } else {
-            print("did not discover characteristic")
+        guard let characteristics = service.characteristics else {
+            print("No characteristics available")
+            return
+        }
+        for characteristic in characteristics {
+            if characteristic.uuid.uuidString.uppercased().isEqual(BLEConstants.nRF8001CharacteristicRX.uuidString.uppercased())  {
+                rxCharacteristic = characteristic
+                peripheral.setNotifyValue(true, for: characteristic)
+            } else if characteristic.uuid.uuidString.uppercased().isEqual(BLEConstants.nRF8001CharacteristicTX.uuidString.uppercased())  {
+                txCharacteristic = characteristic
+                peripheral.setNotifyValue(true, for: characteristic)
+            }
         }
     }
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-//        print("peripheralDidUpdateValueForCharacteristic")
-        guard let temperatureData = characteristic.value else {
+        guard let value = characteristic.value else {
             print("value does not exist")
             return
         }
         
-        if characteristic == writableCharacteristic {
-            print("data received: " + String(describing: temperatureData))
-        }
-        
-        if let dataString = NSString.init(data: temperatureData, encoding: String.Encoding.utf8.rawValue) as String? {
-            self.informDelegatesDidReceiveData(manager: self, dataString: dataString)
+        if characteristic == rxCharacteristic {
+            if let dataString = NSString.init(data: value, encoding: String.Encoding.utf8.rawValue) as String? {
+                informDelegatesDidReceiveData(manager: self, dataString: dataString)
+            }
         }
     }
 }
@@ -220,8 +204,7 @@ extension BLEManager: CBPeripheralDelegate {
 extension BLEManager {
     
     func informDelegatesDidConnect(manager: BLEManager) {
-//        print("informDelegatesDidConnect")
-        for delegate in self.bleDelegates() {
+        for delegate in bleDelegates() {
             DispatchQueue.main.async {
                 delegate.bleManagerDidConnect(manager)
             }
@@ -229,8 +212,7 @@ extension BLEManager {
     }
     
     func informDelegatesDidDisconnect(manager: BLEManager) {
-//        print("informDelegatesDidDisconnect")
-        for delegate in self.bleDelegates() {
+        for delegate in bleDelegates() {
             DispatchQueue.main.async {
                 delegate.bleManagerDidDisconnect(manager)
             }
@@ -238,8 +220,7 @@ extension BLEManager {
     }
     
     func informDelegatesDidReceiveData(manager: BLEManager, dataString: String) {
-//        print("informDelegatesDidReceiveData")
-        for delegate in self.bleDelegates() {
+        for delegate in bleDelegates() {
             DispatchQueue.main.async {
                 delegate.bleManager(manager, receivedDataString: dataString)
             }

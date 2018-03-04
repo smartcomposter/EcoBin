@@ -20,6 +20,7 @@ class MainViewController: UIViewController {
     @IBOutlet weak var startButton: UIButton!
     @IBOutlet weak var stopButton: UIButton!
     @IBOutlet weak var temperatureLabel: UILabel!
+    @IBOutlet weak var moistureLabel: UILabel!
     @IBOutlet weak var compostingButton: UIButton!
     @IBOutlet weak var instructionsButton: UIButton!
     @IBOutlet weak var compostBetterButton: UIButton!
@@ -40,12 +41,7 @@ class MainViewController: UIViewController {
         temperatureLabel.text = "ERROR"
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-    }
-    
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
+    deinit {
         bleManager.removeDelegate(self)
     }
     
@@ -122,6 +118,7 @@ class MainViewController: UIViewController {
     
     @IBAction func startButtonPressed(_ sender: Any) {
         bleManager.startScanning()
+        bleManager.sendData()
     }
     
     @IBAction func stopButtonPressed(_ sender: Any) {
@@ -161,6 +158,20 @@ extension MainViewController: BLEManagerDelegate {
         self.temperatureLabel.textColor = UIColor.red
     }
     func bleManager(_ manager: BLEManagable, receivedDataString dataString: String) {
-        self.temperatureLabel.text = dataString + "℃"
+//        print(dataString)
+        if (dataString.containsIgnoringCase(find: "temp")) {
+            self.temperatureLabel.text = dataString + "℃"
+        } else if (dataString.containsIgnoringCase(find: "moisture")) {
+            moistureLabel.text = dataString
+        }
+    }
+}
+
+extension String {
+    func contains(find: String) -> Bool{
+        return self.range(of: find) != nil
+    }
+    func containsIgnoringCase(find: String) -> Bool{
+        return self.range(of: find, options: .caseInsensitive) != nil
     }
 }
