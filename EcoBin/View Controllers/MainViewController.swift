@@ -34,11 +34,28 @@ class MainViewController: UIViewController {
     var startTime = TimeInterval()
     var timer = Timer()
     
+    var statusBarShouldBeHidden = false
+    
     override func viewDidLoad() {
         bleManager.addDelegate(self)
         setupInitialView()
         
         temperatureLabel.text = "ERROR"
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Show the status bar
+        updateStatusBar(shouldHide: false)
+    }
+    
+    override var prefersStatusBarHidden: Bool {
+        return statusBarShouldBeHidden
+    }
+    
+    override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
+        return .slide
     }
     
     deinit {
@@ -116,6 +133,13 @@ class MainViewController: UIViewController {
         smallLabelOne.text = "Current Time: \(strHours):\(strMinutes):\(strSeconds)"
     }
     
+    func updateStatusBar(shouldHide : Bool) {
+        statusBarShouldBeHidden = shouldHide
+        UIView.animate(withDuration: 0.25) {
+            self.setNeedsStatusBarAppearanceUpdate()
+        }
+    }
+    
     @IBAction func startButtonPressed(_ sender: Any) {
         bleManager.startScanning()
         bleManager.sendData()
@@ -135,18 +159,33 @@ class MainViewController: UIViewController {
     }
     
     @IBAction func instructionsButtonPressed(_ sender: Any) {
+        if let instructionsVC = self.storyboard?.instantiateViewController(withIdentifier: "InstructionsViewController") as? InstructionsViewController {
+            present(instructionsVC, animated: true, completion: nil)
+        }
     }
     
     @IBAction func compostBetterButtonPressed(_ sender: Any) {
+        if let webVC = self.storyboard?.instantiateViewController(withIdentifier: "WebViewController") as? WebViewController {
+            updateStatusBar(shouldHide: true)
+            webVC.urlString = "https://smartcomposter.github.io"
+            present(webVC, animated: true, completion: nil)
+        }
     }
     
     @IBAction func settingsButtonPressed(_ sender: Any) {
+        if let settingsVC = self.storyboard?.instantiateViewController(withIdentifier: "SettingsViewController") as? SettingsViewController {
+            present(settingsVC, animated: true, completion: nil)
+        }
     }
     
     @IBAction func troubleshootingButtonPressed(_ sender: Any) {
+        if let webVC = self.storyboard?.instantiateViewController(withIdentifier: "WebViewController") as? WebViewController {
+            updateStatusBar(shouldHide: true)
+            webVC.urlString = "https://smartcomposter.github.io/#troubleshooting"
+            present(webVC, animated: true, completion: nil)
+        }
     }
 }
-
 
 // MARK: BLEManagerDelegate
 extension MainViewController: BLEManagerDelegate {
@@ -158,7 +197,6 @@ extension MainViewController: BLEManagerDelegate {
         self.temperatureLabel.textColor = UIColor.red
     }
     func bleManager(_ manager: BLEManagable, receivedDataString dataString: String) {
-//        print(dataString)
         if (dataString.containsIgnoringCase(find: "temp")) {
             self.temperatureLabel.text = dataString + "℃"
         } else if (dataString.containsIgnoringCase(find: "moisture")) {
