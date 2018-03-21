@@ -23,7 +23,7 @@ protocol BLEManagable {
     func startScanning()
     func stopScanning()
     func disconnectPeripheral()
-    func sendData()
+    func sendData(text: String)
     
     func addDelegate(_ delegate: BLEManagerDelegate)
     func removeDelegate(_ delegate: BLEManagerDelegate)
@@ -102,8 +102,8 @@ class BLEManager: NSObject, BLEManagable {
         }
     }
     
-    func sendData() {
-        if let data = "apple".data(using: String.Encoding.ascii), let sendCharacteristic = txCharacteristic {
+    func sendData(text : String) {
+        if let data = text.data(using: String.Encoding.ascii), let sendCharacteristic = txCharacteristic {
             BLEPeripheral?.writeValue(data, for: sendCharacteristic, type: CBCharacteristicWriteType.withoutResponse)
             if let value = String(data: data, encoding: String.Encoding.ascii) {
                 print("Value sent: ", value)

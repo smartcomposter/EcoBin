@@ -9,18 +9,9 @@
 import UIKit
 
 class InstructionsViewController: UIViewController {
-    
-    @IBOutlet weak var closeButton: UIButton!
-    
+        
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupView()
-    }
-    
-    func setupView() {
-        closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = UIColor.black.cgColor
-        closeButton.layer.cornerRadius = closeButton.frame.size.width/2
     }
 
     @IBAction func closeButtonPressed(_ sender: Any) {

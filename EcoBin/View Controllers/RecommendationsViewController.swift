@@ -28,16 +28,10 @@ class RecommendationsViewController: UIViewController {
     }
     
     func setupView() {
-        setupButton(button: backButton)
-        setupButton(button: startCompostingButton)
-        backButton.layer.cornerRadius = backButton.frame.size.width/2
+        Helper.setupView(view: startCompostingButton)
+
     }
-    
-    func setupButton(button: UIButton) {
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.black.cgColor
-    }
-    
+
     func addRecommendedItems() {
         let sortedRecommendedItems = recommendedItems.sorted{ $0.value > $1.value }
 
@@ -58,7 +52,7 @@ class RecommendationsViewController: UIViewController {
     @IBAction func startCompostingButtonPressed(_ sender: Any) {
         if let mainVC = presentingViewController?.presentingViewController as? MainViewController {
             mainVC.dismiss(animated: true, completion: nil)
-            mainVC.setupViewForCompostingStarted()
+            mainVC.setupForCompostingStarted()
         }
     }
     

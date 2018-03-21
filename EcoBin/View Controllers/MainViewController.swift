@@ -15,26 +15,32 @@ enum CompostingState {
 
 class MainViewController: UIViewController {
     
-    var bleManager: BLEManagable = BLEManager()
-    
     @IBOutlet weak var startButton: UIButton!
     @IBOutlet weak var stopButton: UIButton!
     @IBOutlet weak var temperatureLabel: UILabel!
-    @IBOutlet weak var moistureLabel: UILabel!
     @IBOutlet weak var compostingButton: UIButton!
     @IBOutlet weak var instructionsButton: UIButton!
-    @IBOutlet weak var compostBetterButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var troubleshootingButton: UIButton!
     @IBOutlet weak var mainLabelView: UIView!
     @IBOutlet weak var smallLabelOne: UILabel!
     @IBOutlet weak var smallLabelTwo: UILabel!
-    
-    var currentCompostingState = CompostingState.Stopped
+
+    var bleManager: BLEManagable = BLEManager()
+    var statusVC : StatusViewController?
     var startTime = TimeInterval()
     var timer = Timer()
-    
     var statusBarShouldBeHidden = false
+    
+    var currentCompostingState : CompostingState = .Stopped {
+        didSet {
+            if (currentCompostingState == .Stopped) {
+                bleManager.sendData(text: "0")
+            } else {
+                bleManager.sendData(text: "1")
+            }
+        }
+    }
     
     override func viewDidLoad() {
         bleManager.addDelegate(self)
@@ -46,7 +52,6 @@ class MainViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // Show the status bar
         updateStatusBar(shouldHide: false)
     }
     
@@ -63,34 +68,28 @@ class MainViewController: UIViewController {
     }
     
     func setupInitialView() {
-        setupButton(button: instructionsButton)
-        setupButton(button: compostBetterButton)
-        setupButton(button: settingsButton)
-        setupButton(button: troubleshootingButton)
-        mainLabelView.layer.borderWidth = 1;
-        mainLabelView.layer.borderColor = UIColor.black.cgColor
-        setupViewForCompostingStopped()
+        Helper.setupView(view: instructionsButton)
+        Helper.setupView(view: settingsButton)
+        Helper.setupView(view: troubleshootingButton)
+        Helper.setupView(view: mainLabelView)
+        
+        smallLabelTwo.text = "Device ID: ABCDE12345"
+        setupForCompostingStopped()
     }
     
-    func setupButton(button: UIButton) {
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.black.cgColor
-    }
-    
-    func setupViewForCompostingStopped() {
+    func setupForCompostingStopped() {
         currentCompostingState = .Stopped
         compostingButton.setTitle("Start Composting", for: .normal)
         smallLabelOne.isHidden = true
-        smallLabelTwo.text = "Device ID: ABCDE12345"
         stopTimer()
     }
     
-    func setupViewForCompostingStarted() {
+    func setupForCompostingStarted() {
+        bleManager.startScanning()
         currentCompostingState = .Started
-        compostingButton.setTitle("Stop Composting", for: .normal)
+        compostingButton.setTitle("View Status", for: .normal)
         smallLabelOne.isHidden = false
-        smallLabelOne.text = "Current Time: 00:00:00"
-        smallLabelTwo.text = "Predicted Time: 12:00:00"
+        smallLabelOne.text = "Elapsed Time: 00:00:00"
         startTimer()
     }
     
@@ -130,7 +129,10 @@ class MainViewController: UIViewController {
 //        let strFraction = String(format: "%02d", fraction)
         
         //concatenate minuets, seconds and milliseconds as assign it to the UILabel
-        smallLabelOne.text = "Current Time: \(strHours):\(strMinutes):\(strSeconds)"
+        smallLabelOne.text = "Elapsed Time: \(strHours):\(strMinutes):\(strSeconds)"
+        if (statusVC != nil) {
+            statusVC?.elapsedTimeLabel.text = "\(strHours):\(strMinutes):\(strSeconds)"
+        }
     }
     
     func updateStatusBar(shouldHide : Bool) {
@@ -142,7 +144,6 @@ class MainViewController: UIViewController {
     
     @IBAction func startButtonPressed(_ sender: Any) {
         bleManager.startScanning()
-        bleManager.sendData()
     }
     
     @IBAction func stopButtonPressed(_ sender: Any) {
@@ -150,25 +151,26 @@ class MainViewController: UIViewController {
     }
     
     @IBAction func compostingButtonPressed(_ sender: Any) {
+        bleManager.startScanning()
         if (currentCompostingState == .Stopped) {
-            let selectionVC = self.storyboard?.instantiateViewController(withIdentifier: "SelectionViewController") as! SelectionViewController
-            present(selectionVC, animated: true, completion: nil)
+            if let selectionVC = self.storyboard?.instantiateViewController(withIdentifier: "SelectionViewController") as? SelectionViewController {
+                present(selectionVC, animated: true, completion: nil)
+            }
         } else {
-            setupViewForCompostingStopped()
+            if (statusVC == nil) {
+                if let tempStatusVC = self.storyboard?.instantiateViewController(withIdentifier: "StatusViewController") as? StatusViewController {
+                    statusVC = tempStatusVC
+                }
+            }
+            if (statusVC != nil) {
+                present(statusVC!, animated: true, completion: nil)
+            }
         }
     }
     
     @IBAction func instructionsButtonPressed(_ sender: Any) {
         if let instructionsVC = self.storyboard?.instantiateViewController(withIdentifier: "InstructionsViewController") as? InstructionsViewController {
             present(instructionsVC, animated: true, completion: nil)
-        }
-    }
-    
-    @IBAction func compostBetterButtonPressed(_ sender: Any) {
-        if let webVC = self.storyboard?.instantiateViewController(withIdentifier: "WebViewController") as? WebViewController {
-            updateStatusBar(shouldHide: true)
-            webVC.urlString = "https://smartcomposter.github.io"
-            present(webVC, animated: true, completion: nil)
         }
     }
     
@@ -198,18 +200,11 @@ extension MainViewController: BLEManagerDelegate {
     }
     func bleManager(_ manager: BLEManagable, receivedDataString dataString: String) {
         if (dataString.containsIgnoringCase(find: "temp")) {
+            let data = dataString.replacingOccurrences(of: "temp: ", with: "")
             self.temperatureLabel.text = dataString + "℃"
-        } else if (dataString.containsIgnoringCase(find: "moisture")) {
-            moistureLabel.text = dataString
+            if (statusVC != nil) {
+                statusVC?.temperatureLabel.text = data + "℃"
+            }
         }
-    }
-}
-
-extension String {
-    func contains(find: String) -> Bool{
-        return self.range(of: find) != nil
-    }
-    func containsIgnoringCase(find: String) -> Bool{
-        return self.range(of: find, options: .caseInsensitive) != nil
     }
 }

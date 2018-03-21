@@ -10,7 +10,7 @@ import UIKit
 
 class SelectionViewController: UIViewController {
     
-    @IBOutlet weak var backButton: UIButton!
+    @IBOutlet weak var closeButton: UIButton!
     @IBOutlet weak var nextButton: UIButton!
     @IBOutlet weak var compostBinSlider: UISlider!
     @IBOutlet weak var fruitSlider: UISlider!
@@ -24,23 +24,13 @@ class SelectionViewController: UIViewController {
     }
     
     func setupView() {
-        setupButton(button: backButton)
-        setupButton(button: nextButton)
-        backButton.layer.cornerRadius = backButton.frame.size.width/2
+        Helper.setupView(view: nextButton)
     }
     
-    func setupButton(button: UIButton) {
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.black.cgColor
-    }
-    
-    @IBAction func backButtonPressed(_ sender: Any) {
+    @IBAction func closeButtonPressed(_ sender: Any) {
         dismiss(animated: true, completion: nil)
     }
-    
-    @IBAction func nextButtonPressed(_ sender: Any) {
-    }
-    
+
     @IBAction func compostBinSliderChanged(_ sender: Any) {
         print("compostBinSlider: \(compostBinSlider.value)")
     }

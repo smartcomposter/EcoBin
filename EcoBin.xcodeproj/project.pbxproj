@@ -11,6 +11,8 @@
 		05095B722044D7F10003A0B5 /* RecommendationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05095B712044D7F10003A0B5 /* RecommendationsViewController.swift */; };
 		05095B7420450F410003A0B5 /* RecommendedItemView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 05095B7320450F410003A0B5 /* RecommendedItemView.xib */; };
 		05095B7620450FE00003A0B5 /* RecommendedItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05095B7520450FE00003A0B5 /* RecommendedItemView.swift */; };
+		0551CFBE205F47BB00913254 /* Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0551CFBD205F47BB00913254 /* Helper.swift */; };
+		0551CFC0205F802300913254 /* StatusViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0551CFBF205F802300913254 /* StatusViewController.swift */; };
 		055B45A8201FC3A6007FA950 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055B45A7201FC3A6007FA950 /* AppDelegate.swift */; };
 		055B45AA201FC3A6007FA950 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055B45A9201FC3A6007FA950 /* MainViewController.swift */; };
 		055B45AD201FC3A6007FA950 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 055B45AB201FC3A6007FA950 /* Main.storyboard */; };
@@ -27,6 +29,8 @@
 		05095B712044D7F10003A0B5 /* RecommendationsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewController.swift; sourceTree = "<group>"; };
 		05095B7320450F410003A0B5 /* RecommendedItemView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RecommendedItemView.xib; sourceTree = "<group>"; };
 		05095B7520450FE00003A0B5 /* RecommendedItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendedItemView.swift; sourceTree = "<group>"; };
+		0551CFBD205F47BB00913254 /* Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helper.swift; sourceTree = "<group>"; };
+		0551CFBF205F802300913254 /* StatusViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusViewController.swift; sourceTree = "<group>"; };
 		055B45A4201FC3A6007FA950 /* EcoBin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EcoBin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		055B45A7201FC3A6007FA950 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		055B45A9201FC3A6007FA950 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
@@ -69,6 +73,7 @@
 				05C3C3AC205235940063A715 /* WebViewController.swift */,
 				05C3C3AE20524F660063A715 /* SettingsViewController.swift */,
 				05C3C3B020524F720063A715 /* InstructionsViewController.swift */,
+				0551CFBF205F802300913254 /* StatusViewController.swift */,
 			);
 			path = "View Controllers";
 			sourceTree = "<group>";
@@ -94,6 +99,7 @@
 			children = (
 				05095B7820452C320003A0B5 /* View Controllers */,
 				05095B7720452C1E0003A0B5 /* Views */,
+				0551CFBD205F47BB00913254 /* Helper.swift */,
 				055B45A7201FC3A6007FA950 /* AppDelegate.swift */,
 				055B45B9201FC46A007FA950 /* BLEManager.swift */,
 				055B45AB201FC3A6007FA950 /* Main.storyboard */,
@@ -189,7 +195,9 @@
 				05095B7620450FE00003A0B5 /* RecommendedItemView.swift in Sources */,
 				05C3C3AD205235940063A715 /* WebViewController.swift in Sources */,
 				055B45A8201FC3A6007FA950 /* AppDelegate.swift in Sources */,
+				0551CFBE205F47BB00913254 /* Helper.swift in Sources */,
 				05095B722044D7F10003A0B5 /* RecommendationsViewController.swift in Sources */,
+				0551CFC0205F802300913254 /* StatusViewController.swift in Sources */,
 				05C3C3AF20524F660063A715 /* SettingsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
