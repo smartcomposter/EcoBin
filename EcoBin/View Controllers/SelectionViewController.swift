@@ -27,27 +27,58 @@ class SelectionViewController: UIViewController {
         Helper.setupView(view: nextButton)
     }
     
+    @IBAction func nextButtonPressed(_ sender: Any) {
+        if let recommendationsVC = self.storyboard?.instantiateViewController(withIdentifier: "RecommendationsViewController") as? RecommendationsViewController {
+            recommendationsVC.compostBinSliderState = getSliderState(slider: compostBinSlider)
+            recommendationsVC.fruitSliderState = getSliderState(slider: fruitSlider)
+            recommendationsVC.vegetableSliderState = getSliderState(slider: vegetableSlider)
+            recommendationsVC.breadSliderState = getSliderState(slider: breadSlider)
+            recommendationsVC.meatSliderState = getSliderState(slider: meatSlider)
+            present(recommendationsVC, animated: true, completion: nil)
+        }
+    }
+    
     @IBAction func closeButtonPressed(_ sender: Any) {
         dismiss(animated: true, completion: nil)
     }
 
     @IBAction func compostBinSliderChanged(_ sender: Any) {
-        print("compostBinSlider: \(compostBinSlider.value)")
+        sliderValueChanged(slider: compostBinSlider)
     }
     
     @IBAction func fruitSliderChanged(_ sender: Any) {
-        print("fruitSlider: \(fruitSlider.value)")
+        sliderValueChanged(slider: fruitSlider)
     }
     
     @IBAction func vegetableSliderChanged(_ sender: Any) {
-        print("vegetableSlider: \(vegetableSlider.value)")
+        sliderValueChanged(slider: vegetableSlider)
     }
     
     @IBAction func breadSliderChanged(_ sender: Any) {
-        print("breadSlider: \(breadSlider.value)")
+        sliderValueChanged(slider: breadSlider)
     }
     
     @IBAction func meatSliderChanged(_ sender: Any) {
-        print("meatSlider: \(meatSlider.value)")
+        sliderValueChanged(slider: meatSlider)
+    }
+    
+    func getSliderState(slider: UISlider) -> SliderState {
+        if (slider.value < 0.33) {
+            return .Low
+        } else if (slider.value < 0.66) {
+            return .Medium
+        } else {
+            return .High
+        }
+    }
+
+    func sliderValueChanged(slider: UISlider) {
+        if (slider.value < 0.33) {
+            slider.setValue(0, animated: true)
+        } else if (slider.value < 0.66) {
+            slider.setValue(0.5, animated: true)
+        } else {
+            slider.setValue(1, animated: true)
+        }
     }
 }

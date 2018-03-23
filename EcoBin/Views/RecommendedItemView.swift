@@ -16,9 +16,8 @@ class RecommendedItemView: UIView {
         
     }
     
-    func setTitle(title: String, State state: Bool) {
+    func setTitle(title: String) {
         label.text = title
-        label.alpha = state ? 1.0 : 0.5;
     }
     
 }

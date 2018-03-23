@@ -331,7 +331,7 @@
                                     <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <connections>
-                                    <segue destination="XJb-tM-aYf" kind="presentation" id="4QW-bE-qp5"/>
+                                    <action selector="nextButtonPressed:" destination="VY0-KT-1MV" eventType="touchUpInside" id="zlF-xy-RAF"/>
                                 </connections>
                             </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Composting" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1Wz-qa-NKN">
@@ -435,7 +435,7 @@
         <!--Recommendations View Controller-->
         <scene sceneID="S1B-YV-aJr">
             <objects>
-                <viewController id="XJb-tM-aYf" customClass="RecommendationsViewController" customModule="EcoBin" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="RecommendationsViewController" id="XJb-tM-aYf" customClass="RecommendationsViewController" customModule="EcoBin" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="SLg-Y0-H36">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

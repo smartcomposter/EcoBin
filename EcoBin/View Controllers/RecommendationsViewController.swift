@@ -8,38 +8,75 @@
 
 import UIKit
 
+enum SliderState : Int {
+    case Low = 1
+    case Medium = 3
+    case High = 5
+}
+
 class RecommendationsViewController: UIViewController {
     
-    let recommendedItems : [String: Int] = ["10g Compost Starter" : 1,
-                                           "1.5L Sawdust" : 1,
-                                           "2L Water" : 1,
-                                           "More Vegetables" : 0,
-                                           "More Fruits" : 0]
+    let fruitCNRatio = 25
+    let vegetableCNRatio = 20
+    let riceCNRatio = 15
+    let meatCNRatio = 5
 
     @IBOutlet weak var startCompostingButton: UIButton!
     @IBOutlet weak var backButton: UIButton!
     @IBOutlet weak var recommendationsStackView: UIStackView!
     @IBOutlet weak var stackViewHeightConstraint: NSLayoutConstraint!
     
+    var compostBinSliderState : SliderState!
+    var fruitSliderState : SliderState!
+    var vegetableSliderState : SliderState!
+    var breadSliderState : SliderState!
+    var meatSliderState : SliderState!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
-        addRecommendedItems()
+        determineRecommendations()
     }
     
     func setupView() {
         Helper.setupView(view: startCompostingButton)
-
     }
 
-    func addRecommendedItems() {
-        let sortedRecommendedItems = recommendedItems.sorted{ $0.value > $1.value }
-
-        for (itemName, active) in sortedRecommendedItems {
-            let recommendedItemView = Bundle.main.loadNibNamed("RecommendedItemView", owner: self, options: nil)?.first as? RecommendedItemView
-            recommendedItemView?.setTitle(title: itemName, State: Bool(truncating: active as NSNumber))
-            recommendationsStackView.addArrangedSubview(recommendedItemView!)
+    func determineRecommendations() {
+        var waterRecommendation = ""
+        var compostStaterRecommendation = ""
+        
+        switch compostBinSliderState {
+        case .Low:
+            waterRecommendation = "1 L of Water"
+            compostStaterRecommendation = "1 Cup of Compost Starter"
+        case .Medium:
+            waterRecommendation = "2 L of Water"
+            compostStaterRecommendation = "2 Cups of Compost Starter"
+        case .High:
+            waterRecommendation = "3 L of Water"
+            compostStaterRecommendation = "3 Cups of Compost Starter"
+        default:
+            break
         }
+        
+        let numerator = (fruitSliderState.rawValue * fruitCNRatio) + (vegetableSliderState.rawValue * vegetableCNRatio) + (breadSliderState.rawValue * riceCNRatio) + (meatSliderState.rawValue * meatCNRatio)
+        let denominator = fruitSliderState.rawValue + vegetableSliderState.rawValue + breadSliderState.rawValue + meatSliderState.rawValue
+
+        let n = Double((30 * denominator - numerator)) / 120.0
+        let poundsOfPaper = n * 0.5
+        let pounds = String(format: "%.2f", poundsOfPaper)
+        let paperRecommendation = "\(pounds) lb of Paper"
+        
+        addRecommendedItem(recommendation: waterRecommendation)
+        addRecommendedItem(recommendation: compostStaterRecommendation)
+        addRecommendedItem(recommendation: paperRecommendation)
+    }
+    
+    func addRecommendedItem(recommendation: String) {
+        let recommendedItemView = Bundle.main.loadNibNamed("RecommendedItemView", owner: self, options: nil)?.first as? RecommendedItemView
+        recommendedItemView?.setTitle(title: recommendation)
+        recommendationsStackView.addArrangedSubview(recommendedItemView!)
         
         stackViewHeightConstraint.constant = CGFloat(recommendationsStackView.arrangedSubviews.count*30);
         stackViewHeightConstraint.isActive = true
@@ -55,5 +92,4 @@ class RecommendationsViewController: UIViewController {
             mainVC.setupForCompostingStarted()
         }
     }
-    
 }
